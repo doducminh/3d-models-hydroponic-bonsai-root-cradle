@@ -1,0 +1,685 @@
+<title>Bốn phương án móc thành</title>
+<style>
+  :root {
+    --paper:#ECEFF1; --panel:#FFFFFF; --panel-2:#F5F7F8;
+    --ink:#14202A; --ink-soft:#566873; --rule:#C2CCD2; --rule-soft:#DDE3E7;
+    --red:#C31F2B; --ok:#2E7D5B; --accent:#3F8478; --warn:#B4711A;
+    --glass:#3F8478; --water:#2F7FA8; --root:#9A7B3F; --leaf:#4E8A46;
+    --part:#C4562F; --dead:#98A6AE; --draw-bg:#FBFCFC;
+
+    --display:"Arial Narrow","Helvetica Neue Condensed","Segoe UI Semibold","Segoe UI",sans-serif;
+    /* KHÔNG dùng Georgia: thiếu glyph dấu kép tiếng Việt (ấ ắ ẫ) — CLAUDE.md mục 1. */
+    --body:Cambria,"Noto Serif","Times New Roman",serif;
+    --mono:Consolas,"SF Mono","Roboto Mono","Courier New",monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#101619; --panel:#182126; --panel-2:#1E282E;
+      --ink:#E3EAED; --ink-soft:#93A4AE; --rule:#35454E; --rule-soft:#26333A;
+      --red:#E24450; --ok:#5FBE92; --accent:#63B3A5; --warn:#D69A3C;
+      --glass:#63B3A5; --water:#5FAFD4; --root:#C7A468; --leaf:#7CBB72;
+      --part:#EC7A4E; --dead:#5E6E77; --draw-bg:#141B1F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#101619; --panel:#182126; --panel-2:#1E282E;
+    --ink:#E3EAED; --ink-soft:#93A4AE; --rule:#35454E; --rule-soft:#26333A;
+    --red:#E24450; --ok:#5FBE92; --accent:#63B3A5; --warn:#D69A3C;
+    --glass:#63B3A5; --water:#5FAFD4; --root:#C7A468; --leaf:#7CBB72;
+    --part:#EC7A4E; --dead:#5E6E77; --draw-bg:#141B1F;
+  }
+
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--body);
+         font-size:16px; line-height:1.55; }
+  .wrap { max-width:1080px; margin:0 auto; padding:24px 20px 80px; }
+  h1 { font-family:var(--display); font-size:31px; margin:0 0 3px; }
+  h2 { font-family:var(--display); font-size:21px; margin:40px 0 12px;
+       border-bottom:2px solid var(--rule); padding-bottom:6px; }
+  .sub { color:var(--ink-soft); margin:0 0 22px; }
+  .mono { font-family:var(--mono); font-size:.93em; }
+
+  .card { background:var(--panel); border:1px solid var(--rule); border-radius:8px;
+          padding:16px 18px; margin:14px 0; }
+  .card.fix { border-left:5px solid var(--warn); }
+  .card.fix b { color:var(--warn); }
+  .card.hard { border-left:5px solid var(--red); }
+  .card.hard b { color:var(--red); }
+
+  .opt { background:var(--panel); border:1px solid var(--rule); border-radius:10px;
+         margin:20px 0; overflow:hidden; }
+  .opt.rec { border:2px solid var(--accent); }
+  .opt.no  { opacity:.72; }
+  .ohead { display:flex; align-items:baseline; gap:11px; flex-wrap:wrap;
+           padding:13px 18px; background:var(--panel-2); border-bottom:1px solid var(--rule); }
+  .ohead .tag { font-family:var(--display); font-weight:700; font-size:15px;
+        background:var(--ink); color:var(--panel); padding:2px 9px; border-radius:4px; }
+  .opt.rec .ohead .tag { background:var(--accent); color:#fff; }
+  .ohead h3 { font-family:var(--display); font-size:20px; margin:0; flex:1 1 260px; }
+  .ohead .slug { font-family:var(--mono); font-size:12.5px; color:var(--ink-soft); }
+  .pill { font-family:var(--display); font-size:12.5px; padding:2px 9px; border-radius:11px;
+          border:1px solid var(--accent); color:var(--accent); white-space:nowrap; }
+  .pill.no { border-color:var(--red); color:var(--red); }
+
+  .draws { display:flex; flex-wrap:wrap; gap:0; border-bottom:1px solid var(--rule-soft); }
+  .d { flex:1 1 330px; background:var(--draw-bg); padding:8px 6px 4px;
+       border-right:1px solid var(--rule-soft); overflow-x:auto; }
+  .d:last-child { border-right:none; }
+  .d svg { display:block; width:100%; height:auto; min-width:290px; }
+  .d .cap { font-family:var(--display); font-size:12.5px; color:var(--ink-soft);
+            text-align:center; padding-top:3px; }
+
+  .obody { display:grid; grid-template-columns:1fr 1fr 1fr; gap:0; }
+  @media (max-width:820px) { .obody { grid-template-columns:1fr; } }
+  .obody > div { padding:13px 16px; border-right:1px solid var(--rule-soft); }
+  .obody > div:last-child { border-right:none; }
+  .obody h4 { font-family:var(--display); font-size:13px; text-transform:uppercase;
+              letter-spacing:.05em; color:var(--ink-soft); margin:0 0 7px; }
+  .obody ul { margin:0; padding-left:19px; font-size:14.5px; }
+  .obody li { margin:5px 0; }
+  .up li::marker { color:var(--ok); }
+  .dn li::marker { color:var(--red); }
+  .obody table { width:100%; border-collapse:collapse; font-size:13.5px; }
+  .obody td { padding:2px 0; vertical-align:top; }
+  .obody td.k { color:var(--ink-soft); padding-right:8px; }
+  .obody td.n { font-family:var(--mono); text-align:right; white-space:nowrap; }
+
+  .verdict { margin:0; padding:12px 18px; background:var(--panel-2);
+             border-top:1px solid var(--rule-soft); font-size:15px; }
+  .verdict b { font-family:var(--display); }
+
+  table.cmp { border-collapse:collapse; width:100%; background:var(--panel); font-size:14px; }
+  table.cmp th, table.cmp td { border:1px solid var(--rule-soft); padding:7px 9px; text-align:left; }
+  table.cmp th { background:var(--panel-2); font-family:var(--display); }
+  table.cmp td.c { text-align:center; }
+  .y { color:var(--ok); font-weight:700; } .n2 { color:var(--red); font-weight:700; }
+  ul.plain { padding-left:20px; } ul.plain li { margin:6px 0; }
+  /* Hai hinh nay tung o kho 1050px: fs 7mm thanh 32px, chu de len het hinh.
+     Ban ve ky thuat khong can rong — ghim kho lai la ti le chu/mm dung ngay. */
+  .d.narrow { max-width:440px; margin:0 auto; border:none; }
+  .d.tiny   { max-width:310px; margin:0 auto; border:none; }
+</style>
+
+<div class="wrap">
+<h1>Bốn phương án móc thành</h1>
+<p class="sub">Dự án <span class="mono">hydroponic-bonsai-root-cradle</span> ·
+Chọn một, tôi dựng CAD phương án đó. Mọi số trên hình là số <b>đọc từ ảnh, chưa đo</b> —
+chúng đủ để chọn kiến trúc, chưa đủ để cắt nhựa.</p>
+
+<div class="card fix">
+  <b>Sửa lại điều tôi nói ở bản trước.</b> Tôi đã loại hướng "treo từ miệng hồ" với lý do
+  "toàn bộ tải đi vào cạnh kính" — <b>mà chưa tính</b>. Tính ra thì:
+  <table class="cmp" style="margin-top:9px">
+    <tr><th>Tình huống</th><th>Phản lực lên mặt kính</th><th>Áp suất</th><th>So với kính chịu được</th></tr>
+    <tr><td>Treo bình thường (131 g), với 45mm</td><td class="c mono">2,07 N</td>
+        <td class="c mono">0,0069 MPa</td><td class="c">1 / 48 000</td></tr>
+    <tr><td>Nhấc cả cây ra khỏi nước (350 g)</td><td class="c mono">5,52 N</td>
+        <td class="c mono">0,0184 MPa</td><td class="c">1 / 18 000</td></tr>
+  </table>
+  <p style="margin:9px 0 0">Kính soda-lime chịu nén ~330 MPa; keo silicon ~1,4 MPa. Cả cụm
+  cây này <b>nhẹ hơn một cái máy lọc thác treo</b> mà hồ nào cũng móc lên thành được.
+  Móc thành không phải là chỗ yếu — nó chỉ cần một miếng tiếp xúc rộng để không bấm điểm
+  vào cạnh kính.</p>
+</div>
+
+<h2>Chỗ trống ở đâu — cái này quyết định cả bốn phương án</h2>
+<div class="card hard">
+  <b>Bầu rễ rộng 88 trong lòng hồ sâu 90.</b> Còn <b>1 mm mỗi bên</b> ở hai thành DÀI.
+  Không có gì thả xuống dọc thành trước/thành sau được. Đây là ràng buộc chia đôi bốn
+  phương án: ba phương án đầu <b>chỉ chạm cây ở TỪ CỔ RỄ TRỞ LÊN</b> (chỗ bầu đã thu nhỏ),
+  phương án 4 phải đi đường vòng qua thành NGẮN.
+</div>
+<div class="card" style="padding:10px 6px"><div class="d narrow" id="dRoom"></div></div>
+
+<h2>Cái móc — chung cho cả bốn phương án</h2>
+<div class="card">
+  <div class="d tiny" id="dHook" style="background:transparent"></div>
+  <p style="margin:6px 0 0">Chân ngoài <b>dài hơn</b> chân trong, và đó không phải chuyện
+  thẩm mỹ: cụm quay quanh cạnh trong của mép kính, nên phản lực bằng
+  <span class="mono">F × tầm với ÷ chiều dài chân ngoài</span>. Chân ngoài 28 thay vì 14
+  là phản lực giảm một nửa. Chân trong chỉ để chặn trượt, nên để ngắn cho khỏi che tầm nhìn.</p>
+</div>
+
+<h2>Bốn phương án</h2>
+<div id="opts"></div>
+
+<h2>So sánh</h2>
+<div style="overflow-x:auto"><table class="cmp" id="cmp"></table></div>
+
+<h2>Cách chọn</h2>
+<div class="card">
+<ul class="plain">
+  <li><b>Muốn ít can thiệp nhất, không bao giờ phải bảo dưỡng</b> → <b>PA-1</b>. Nó không
+    chạm vào thân, nên không có việc gì phải làm lại sau khi lắp.</li>
+  <li><b>Muốn chỉnh cao độ vô cấp, và chấp nhận nới dây định kỳ</b> → <b>PA-2</b>.</li>
+  <li><b>Sợ cụm bị hẩy ra khi lỡ tay chạm vào tán</b> → <b>PA-3</b>. Hai móc thì không còn
+    mô-men hẩy, và không một newton nào ép vào mặt kính.</li>
+  <li><b>Muốn nhấc cả cây lẫn giá ra một lần để thay nước, và không muốn chạm vào cây
+    ở bất cứ đâu</b> → <b>PA-4</b>.</li>
+</ul>
+<p style="margin:10px 0 0"><b>Nếu bầu rễ hoá ra tròn đều, không có "vai"</b> (số đo mới ⑲
+ở dưới) thì PA-1 và PA-3 mất chỗ tựa và chỉ còn PA-2 với PA-4. Đo ⑲ trước khi chọn hai
+phương án đó.</p>
+</div>
+
+<h2>Ba số đo mới mà hướng này cần</h2>
+<div class="card">
+<table class="cmp">
+<tr><th>#</th><th>Số</th><th>Đo thế nào</th><th>Chặn cái gì</th></tr>
+<tr><td class="c">⑲</td><td><b>Bề ngang bầu rễ ở dưới cổ rễ 12mm — bầu có "VAI" không</b></td>
+  <td>Nhấc cây, đo bề ngang bầu ở ba cao độ: ngay dưới cổ, dưới cổ 12mm, dưới cổ 25mm</td>
+  <td><b>PA-1 và PA-3.</b> Vành đỡ vai chỉ tồn tại nếu bầu nở ra nhanh dưới cổ. Nở chậm thì
+    vành tụt sâu và cây ngồi thấp hơn tính toán</td></tr>
+<tr><td class="c">⑳</td><td><b>Mặt nào là mặt nhìn chính</b></td>
+  <td>Không cần thước — chỉ cần quyết định</td>
+  <td>Móc đặt ở thành KHUẤT. Đặt sai thì cái móc nằm ngay giữa mặt tiền</td></tr>
+<tr><td class="c">㉑</td><td><b>Mép kính: bề dày ở MÉP TRÊN, và mép có nẹp/viền nhựa không</b></td>
+  <td>Thước kẹp ở mép trên. Sờ xem mép có gờ, có keo tràn, có nẹp không</td>
+  <td>Khe móc. Mép 5 thì khe 6,0; có nẹp thì phải đo cả nẹp và khe rộng hẳn ra</td></tr>
+</table>
+</div>
+
+<div class="card fix" style="margin-top:22px">
+  <b>Phương án cũ (đài sen đứng dưới đáy) tạm dừng, không xoá.</b> Nó vẫn có một điểm mà
+  cả bốn phương án móc thành không có: <b>không một newton nào đi vào kính</b>, và không có
+  gì nhô lên khỏi miệng hồ. Ghi lại ở đây để vài tuần nữa không ai đề xuất lại mà không
+  biết đã cân nhắc: nó bị loại vì <b>chủ dự án muốn móc vào thành</b>, không phải vì sai
+  kỹ thuật. File cũ còn ở <span class="mono">viewer/v1-dai-sen-do-re.html</span>.
+</div>
+
+</div>
+
+<script>
+"use strict";
+/* ═══ tham so — khop design/params.py, tru phan moc la MOI ═══ */
+var P = {
+  TANK_W:150, TANK_D:100, TANK_H:180, GLASS_T:5,
+  WATER_Z:145, WATER_DROP:15,
+  BALL_W:98, BALL_D:88, BALL_H:102, TAIL_LEN:27, TRUNK_D:14, TRUNK_X:18,
+  COLLAR_TARGET:140,
+  SLOT:6.0, HOOK_IN:12, HOOK_OUT:28, HOOK_W:30, WALL:3.0,
+  ARM_T:7, ARM_H:15,
+  RING_ID:62, RING_W:7, RING_T:5, RING_MOUTH:18,
+  V_ANGLE:60, TIE_W:4,
+  BRIDGE_W:14, BRIDGE_H:16,
+  CRADLE_Z:38, CRADLE_ID:70
+};
+var IW = P.TANK_W - 2*P.GLASS_T, ID = P.TANK_D - 2*P.GLASS_T, IH = P.TANK_H - P.GLASS_T;
+var WATER = P.WATER_Z - P.WATER_DROP;
+var BALL_TOP = P.COLLAR_TARGET, BALL_ZC = BALL_TOP - P.BALL_H/2, BALL_BOT = BALL_TOP - P.BALL_H;
+var RR = P.RING_ID/2;
+/* Vanh tron do vao bau: tiep xuc khi ban truc LON cua thiet dien bau bang ban kinh vanh */
+var RING_Z = BALL_ZC + Math.sqrt(Math.max(0, 1 - Math.pow(RR/(P.BALL_W/2), 2))) * (P.BALL_H/2);
+var GAP_LONG = (ID - P.BALL_D)/2;
+var ROOM_R = IW/2 - (P.TRUNK_X + P.BALL_W/2);      // bau lech PHAI => ben phai het cho
+var ROOM_L = IW/2 + (P.TRUNK_X - P.BALL_W/2);
+var TRUNK_TOP = IH + 14;                            // cat than o day, tan cay khong ve
+
+/* ═══ bo ve SVG — ve bang mm, z=0 o y=200 ═══ */
+var H0 = 200, z2y = function (z) { return H0 - z; };
+function el(t, a, inner) {
+  var s = "<" + t;
+  for (var k in a) if (a[k] !== null && a[k] !== undefined) s += " " + k + '="' + a[k] + '"';
+  return inner === undefined ? s + "/>" : s + ">" + inner + "</" + t + ">";
+}
+function txt(x, y, s, o) {
+  o = o || {};
+  return el("text", { x:x, y:y, "font-size":o.fs || 6.4, "text-anchor":o.a || "middle",
+    fill:o.fill || "var(--ink)", "font-weight":o.b ? 700 : null,
+    "font-family":"Arial Narrow, Segoe UI, sans-serif" }, s);
+}
+function line(x1, y1, x2, y2, o) {
+  o = o || {};
+  return el("line", { x1:x1, y1:y1, x2:x2, y2:y2, stroke:o.s || "var(--ink)",
+    "stroke-width":o.w || 0.5, "stroke-dasharray":o.d || null,
+    "marker-start":o.m ? "url(#ar)" : null, "marker-end":o.m ? "url(#ar)" : null });
+}
+function rect(x, y, w, h, o) {
+  o = o || {};
+  return el("rect", { x:x, y:y, width:Math.max(w,0), height:Math.max(h,0), fill:o.f || "none",
+    stroke:o.s || null, "stroke-width":o.w || 0.5, "stroke-dasharray":o.d || null,
+    rx:o.r || null, opacity:o.o || null });
+}
+function dimH(x1, x2, y, lab, o) {
+  o = o || {};
+  return line(x1, y, x2, y, { m:1 }) + line(x1, y-2.5, x1, y+2.5, { d:"1.2 1.2" })
+    + line(x2, y-2.5, x2, y+2.5, { d:"1.2 1.2" })
+    + txt((x1+x2)/2, y + (o.below ? 6.5 : -2.4), lab, { fs:o.fs });
+}
+function dimYp(y1, y2, x, lab, o) {   /* dim doc trong MAT BANG — y la toa do that */
+  o = o || {};
+  return line(x, y1, x, y2, { m:1 }) + line(x-2.5, y1, x+2.5, y1, { d:"1.2 1.2" })
+    + line(x-2.5, y2, x+2.5, y2, { d:"1.2 1.2" })
+    + txt(x + (o.left ? -3 : 3), (y1+y2)/2 + 2, lab, { a:o.left ? "end" : "start", fs:o.fs });
+}
+function dimV(z1, z2, x, lab, o) {
+  o = o || {};
+  var y1 = z2y(z1), y2 = z2y(z2);
+  return line(x, y1, x, y2, { m:1 }) + line(x-2.5, y1, x+2.5, y1, { d:"1.2 1.2" })
+    + line(x-2.5, y2, x+2.5, y2, { d:"1.2 1.2" })
+    + txt(x + (o.left ? -3 : 3), (y1+y2)/2 + 2, lab, { a:o.left ? "end" : "start", fs:o.fs });
+}
+var DEFS = el("defs", {},
+  el("marker", { id:"ar", viewBox:"0 0 8 8", refX:7, refY:4, markerWidth:5, markerHeight:5,
+      orient:"auto" }, el("path", { d:"M0 0 L8 4 L0 8 z", fill:"var(--ink)" }))
+  + el("pattern", { id:"hg", width:2.6, height:2.6, patternTransform:"rotate(45)",
+      patternUnits:"userSpaceOnUse" }, line(0, 0, 0, 2.6, { s:"var(--glass)", w:0.55 })));
+function svg(vb, body, cap) {
+  return el("svg", { viewBox:vb, role:"img" }, DEFS + body)
+    + (cap ? '<div class="cap">' + cap + "</div>" : "");
+}
+
+/* ── ho kinh, mat cat. half = nua be NGOAI, hin = nua be TRONG ── */
+function tankSec(half, hin) {
+  return rect(-half, z2y(IH), 2*half, IH + P.GLASS_T, { f:"url(#hg)", s:"var(--glass)", w:0.8 })
+    + rect(-hin, z2y(IH), 2*hin, IH, { f:"var(--draw-bg)", s:"var(--glass)", w:0.6 })
+    + rect(-hin, z2y(WATER), 2*hin, WATER, { f:"var(--water)", o:0.15 })
+    + line(-hin, z2y(WATER), hin, z2y(WATER), { s:"var(--water)", w:1 });
+}
+var tankDepth = function () { return tankSec(P.TANK_D/2, ID/2); };
+var tankLong  = function () { return tankSec(P.TANK_W/2, IW/2); };
+
+/* ── cay trong mat cat. Than cat o TRUNK_TOP, tan cay khong ve ── */
+function plant(cx, halfW) {
+  var s = el("ellipse", { cx:cx, cy:z2y(BALL_ZC), rx:halfW, ry:P.BALL_H/2,
+      fill:"var(--root)", "fill-opacity":0.26, stroke:"var(--root)", "stroke-width":0.8 });
+  for (var i = -3; i <= 3; i++)
+    s += el("path", { d:"M" + (cx + i*7) + " " + z2y(BALL_BOT + 5) + " q" + (i*2) + " "
+        + (P.TAIL_LEN*0.6) + " " + (i*3) + " " + P.TAIL_LEN,
+      fill:"none", stroke:"var(--root)", "stroke-width":0.7, opacity:0.65 });
+  s += rect(cx - P.TRUNK_D/2, z2y(TRUNK_TOP), P.TRUNK_D, TRUNK_TOP - BALL_TOP + 5,
+      { f:"var(--root)", o:0.7 });
+  return s;
+}
+/* ── cai moc. Mat kinh TRONG o x = side*wallInner ── */
+function hook(wallInner, side, zTop) {
+  var g = P.GLASS_T, w = P.WALL;
+  var xi = side * wallInner, xo = xi + side * g;
+  var sIn = xi - side * w, sOut = xo + side * w;
+  var yT = z2y(zTop), yIn = z2y(zTop - P.HOOK_IN), yOut = z2y(zTop - P.HOOK_OUT);
+  return el("path", { d:"M" + sIn + " " + yIn + " L" + sIn + " " + (yT - w)
+      + " L" + sOut + " " + (yT - w) + " L" + sOut + " " + yOut + " L" + xo + " " + yOut
+      + " L" + xo + " " + yT + " L" + xi + " " + yT + " L" + xi + " " + yIn + " Z",
+    fill:"var(--part)", "fill-opacity":0.9, stroke:"var(--part)", "stroke-width":0.7 });
+}
+/* ── vanh do vai trong MAT CAT. Mat cat di qua MIENG chu C nen phia xa KHONG co vat lieu ── */
+function ringSection(cx, z, wallSide) {
+  var near = rect(cx + wallSide*(RR + P.RING_W), z2y(z), P.RING_W, P.RING_T,
+      { f:"var(--part)", s:"var(--part)", w:0.6, o:0.9 });
+  var far = rect(cx - wallSide*RR, z2y(z), P.RING_W, P.RING_T,
+      { s:"var(--part)", w:0.6, d:"1.6 1.4", o:0.8 });
+  return near + far;
+}
+/* ── mat bang ── */
+function planBase() {
+  return rect(-P.TANK_W/2, -P.TANK_D/2, P.TANK_W, P.TANK_D,
+        { f:"url(#hg)", s:"var(--glass)", w:0.8 })
+    + rect(-IW/2, -ID/2, IW, ID, { f:"var(--draw-bg)", s:"var(--glass)", w:0.6 })
+    + rect(-IW/2, -ID/2, IW, ID, { f:"var(--water)", o:0.14 })
+    + el("ellipse", { cx:P.TRUNK_X, cy:0, rx:P.BALL_W/2, ry:P.BALL_D/2,
+        fill:"var(--root)", "fill-opacity":0.24, stroke:"var(--root)", "stroke-width":0.8,
+        "stroke-dasharray":"3 2" })
+    + el("circle", { cx:P.TRUNK_X, cy:0, r:P.TRUNK_D/2, fill:"var(--root)", "fill-opacity":0.8 });
+}
+/* Vanh ho chu C trong mat bang. mouth = huong mieng (radian). */
+function planRing(cx, cy, mouth) {
+  var hm = Math.asin(Math.min(0.99, (P.RING_MOUTH/2) / RR));
+  var a0 = mouth + hm, a1 = mouth - hm + 2*Math.PI;
+  var Ro = RR + P.RING_W;
+  function pt(r, a) { return [(cx + r*Math.cos(a)).toFixed(2), (cy + r*Math.sin(a)).toFixed(2)]; }
+  var A = pt(RR, a0), B = pt(Ro, a0), Cc = pt(Ro, a1), Dd = pt(RR, a1);
+  return el("path", { d:"M" + A[0] + " " + A[1] + " L" + B[0] + " " + B[1]
+      + " A" + Ro + " " + Ro + " 0 1 1 " + Cc[0] + " " + Cc[1]
+      + " L" + Dd[0] + " " + Dd[1]
+      + " A" + RR + " " + RR + " 0 1 0 " + A[0] + " " + A[1] + " Z",
+    fill:"var(--part)", "fill-opacity":0.85, stroke:"var(--part)", "stroke-width":0.7 });
+}
+
+/* ═══════════════ hinh: cho trong o dau ═══════════════ */
+(function () {
+  var b = planBase();
+  var xr = P.TRUNK_X + P.BALL_W/2, xl = P.TRUNK_X - P.BALL_W/2;
+  b += dimH(xl, -IW/2, -P.TANK_D/2 - 7, ROOM_L.toFixed(0) + "mm", { fs:7 });
+  b += dimH(xr, IW/2, -P.TANK_D/2 - 7, ROOM_R.toFixed(0), { fs:7 });
+  b += line(xl, -P.TANK_D/2 - 5, xl, -P.BALL_D/2 + 6, { d:"2 2", s:"var(--dead)" });
+  b += line(xr, -P.TANK_D/2 - 5, xr, -P.BALL_D/2 + 6, { d:"2 2", s:"var(--dead)" });
+  // khe 1mm: mui ten dimension o co do la vo nghia — dung duong dan
+  b += line(P.TRUNK_X - 4, -ID/2 + GAP_LONG/2, P.TRUNK_X + 26, -P.TANK_D/2 - 16,
+      { s:"var(--red)", w:0.5 });
+  b += txt(P.TRUNK_X + 28, -P.TANK_D/2 - 15, "khe 1mm", { fs:6.6, a:"start",
+      fill:"var(--red)", b:1 });
+  b += line(P.TRUNK_X - 14, ID/2 - GAP_LONG/2, P.TRUNK_X + 16, P.TANK_D/2 + 13,
+      { s:"var(--red)", w:0.5 });
+  b += txt(P.TRUNK_X + 18, P.TANK_D/2 + 14, "khe 1mm", { fs:6.4, a:"start",
+      fill:"var(--red)", b:1 });
+  b += el("text", { x:-72.5, y:0, "font-size":5.6, "text-anchor":"middle", fill:"var(--accent)",
+      "font-weight":700, "font-family":"Arial Narrow, sans-serif",
+      transform:"rotate(-90 -72.5 0)" }, "THÀNH NGẮN TRÁI");
+  b += el("text", { x:72.5, y:0, "font-size":5.6, "text-anchor":"middle", fill:"var(--ink-soft)",
+      "font-family":"Arial Narrow, sans-serif",
+      transform:"rotate(90 72.5 0)" }, "thành ngắn phải");
+  b += txt(-96, -P.TANK_D/2 - 24, "MẶT BẰNG — khe hở quanh bầu rễ",
+      { fs:8, b:1, a:"start" });
+  document.getElementById("dRoom").innerHTML =
+    svg("-100 -86 200 176", b,
+      "Bầu rễ (nét đứt) 98 × 88 trong lòng hồ 140 × 90. Hai thành dài chỉ còn khe 1mm — "
+      + "không thả được gì xuống dọc chúng. Hành lang "
+      + ROOM_L.toFixed(0) + "mm ở thành ngắn TRÁI là đường duy nhất cho PA-4.");
+})();
+
+/* ═══════════════ hinh: chi tiet cai moc ═══════════════ */
+(function () {
+  var z = IH, g = P.GLASS_T, w = P.WALL;
+  // mat kinh TRONG dat o x = 0 => kinh chiem -5..0, long ho o x > 0
+  var b = rect(-g, z2y(z), g, 56, { f:"url(#hg)", s:"var(--glass)", w:0.8 });
+  b += hook(0, -1, z);
+  b += rect(0, z2y(z) - P.ARM_H + w, 34, P.ARM_H,
+      { f:"var(--part)", s:"var(--part)", w:0.7, o:0.5 });
+  b += txt(17, z2y(z) - P.ARM_H/2 + 1, "cần đỡ " + P.ARM_T + "×" + P.ARM_H,
+      { fs:6, fill:"var(--part)", b:1 });
+  b += txt(36, z2y(z) - P.ARM_H/2 + 1, "→ lòng hồ", { fs:5.8, a:"start",
+      fill:"var(--ink-soft)" });
+  b += dimH(-g - w, w, z2y(z) - P.ARM_H - 5, "khe " + P.SLOT.toFixed(1), { fs:6.6 });
+  b += dimV(z, z - P.HOOK_IN, 8, "trong " + P.HOOK_IN, { fs:6.4 });
+  b += dimV(z, z - P.HOOK_OUT, -g - w - 4, "ngoài " + P.HOOK_OUT, { fs:6.4, left:1 });
+  b += txt(-g/2, z2y(z) + 62, "kính " + g, { fs:6, fill:"var(--glass)" });
+  b += txt(-50, -2, "MẶT CẮT CÁI MÓC", { fs:8, b:1, a:"start" });
+  document.getElementById("dHook").innerHTML =
+    svg("-52 -12 132 110", b,
+      "Bề rộng tiếp xúc dọc mép kính: " + P.HOOK_W + "mm — đủ rộng để không bấm điểm vào cạnh kính.");
+})();
+
+/* ═══════════════ bon phuong an ═══════════════ */
+var HOOK_VOL = P.HOOK_W * (P.HOOK_IN + P.HOOK_OUT + P.WALL) * P.WALL * 1.6;
+var RING_VOL = Math.PI * (Math.pow(RR + P.RING_W, 2) - RR*RR) * P.RING_T * 0.9;
+var POST_VOL = (IH - RING_Z) * P.ARM_T * P.ARM_H * 0.8;
+var ARM_VOL  = (ID/2 - RR) * P.ARM_T * P.ARM_H * 0.8;
+function g2(v) { return (v*1.27/1000).toFixed(0) + " g"; }
+
+var VB_DEPTH = "-84 -8 200 216";
+var VB_LONG  = "-112 -8 240 216";
+var VB_PLAN  = "-96 -74 192 156";
+
+var OPTS = [
+{
+  tag:"PA-1", rec:true, pill:"Khuyến nghị",
+  name:"Móc đơn + vành đỡ VAI bầu rễ",
+  slug:"rim-hook-shoulder-ring",
+  sec:function () {
+    var b = tankDepth() + plant(0, P.BALL_D/2);
+    b += hook(ID/2, -1, IH);
+    b += rect(-ID/2, z2y(IH), P.ARM_T, IH - RING_Z, { f:"var(--part)", s:"var(--part)",
+        w:0.7, o:0.85 });
+    b += rect(-ID/2, z2y(RING_Z), ID/2 - RR, P.ARM_H, { f:"var(--part)", s:"var(--part)",
+        w:0.7, o:0.85 });
+    b += ringSection(0, RING_Z, -1);
+    b += dimV(IH, RING_Z, ID/2 + 8, "mép→vành " + (IH - RING_Z).toFixed(0), { fs:6.4 });
+    b += dimV(BALL_TOP, WATER, ID/2 + 33, "cổ rễ +" + (BALL_TOP - WATER).toFixed(0), { fs:6.4 });
+    b += line(RR + P.RING_W, z2y(RING_Z) + 2, RR + 14, z2y(RING_Z) + 13, { s:"var(--part)", w:0.5 });
+    b += txt(RR + 15, z2y(RING_Z) + 14, "miệng C", { fs:5.8, a:"start", fill:"var(--part)" });
+    b += txt(-ID/2 + 3, z2y(RING_Z) - 5, "bầu tựa VAI lên vành", { fs:6.2, a:"start",
+        fill:"var(--part)", b:1 });
+    b += txt(-80, 2, "MẶT CẮT dọc chiều sâu", { fs:8, b:1, a:"start" });
+    return svg(VB_DEPTH, b, "Cột đứng chỉ dài " + (IH - RING_Z).toFixed(0)
+      + "mm, cần ngang " + (ID/2 - RR).toFixed(0) + "mm. Không có gì chạm vào thân cây.");
+  },
+  plan:function () {
+    var b = planBase();
+    b += rect(P.TRUNK_X - P.ARM_T/2, -ID/2 - P.GLASS_T - P.WALL, P.ARM_T,
+        ID/2 + P.GLASS_T + P.WALL - RR, { f:"var(--part)", s:"var(--part)", w:0.7, o:0.85 });
+    b += planRing(P.TRUNK_X, 0, Math.PI/2);
+    b += line(P.TRUNK_X, 0, P.TRUNK_X + 60, 0, { d:"2 2", s:"var(--dead)" });
+    b += line(-IW/2, -ID/2, P.TRUNK_X + 60, -ID/2, { d:"2 2", s:"var(--dead)" });
+    b += dimYp(-ID/2, 0, P.TRUNK_X + 56, "cách thành " + (ID/2).toFixed(0), { fs:6.4 });
+    b += line(P.TRUNK_X, RR + 3, P.TRUNK_X + 8, 44, { s:"var(--part)", w:0.5 });
+    b += txt(P.TRUNK_X + 9, 45, "miệng C " + P.RING_MOUTH, { fs:6.2, a:"start",
+        fill:"var(--part)", b:1 });
+    b += txt(-92, -P.TANK_D/2 - 16, "MẶT BẰNG", { fs:8, b:1, a:"start" });
+    return svg("-96 -74 216 156", b, "Vành Ø" + P.RING_ID + " trong, hở "
+      + P.RING_MOUTH + "mm về phía trong hồ để luồn qua thân Ø" + P.TRUNK_D + ".");
+  },
+  up:["Không chạm vào thân đang sống — <b>không có nguy cơ thắt cổ chai</b>, và không có việc bảo dưỡng nào sau khi lắp",
+      "Cần ngang chỉ " + (ID/2 - RR).toFixed(0) + "mm, cột đứng " + (IH - RING_Z).toFixed(0)
+        + "mm → võng 0,03mm, phản lực 2,1 N",
+      "Tự định tâm: bầu nặng tự tụt vào giữa vành",
+      "Nhấc cây ra thẳng đứng, không tháo gì"],
+  dn:["Cần bầu rễ có <b>VAI</b> — số đo ⑲. Bầu tròn đều thì vành tụt sâu, cây ngồi thấp hơn tính",
+      "Cao độ CỐ ĐỊNH theo bản in. Muốn đổi phải in cột khác (hoặc in sẵn 3 cột)",
+      "Vành Ø62 nằm ngay dưới mặt nước → sẽ thấy, phải làm cho đẹp"],
+  num:[["nhựa", g2(HOOK_VOL + POST_VOL + ARM_VOL + RING_VOL)],
+       ["chạm vào", "vai bầu rễ"],
+       ["phản lực lên kính", "2,1 N"],
+       ["tâm tải cách thành", (ID/2).toFixed(0) + " mm"],
+       ["vành ngồi ở", "z " + RING_Z.toFixed(0)],
+       ["số chi tiết", "1"],
+       ["in", "nằm, không support"]],
+  verdict:"<b>Chọn khi</b> muốn lắp một lần rồi quên — không dây, không siết, không nới lại."
+},
+{
+  tag:"PA-2", rec:false, pill:null,
+  name:"Móc đơn + yên ôm thân + dây mềm",
+  slug:"rim-hook-trunk-saddle",
+  sec:function () {
+    var zS = BALL_TOP + 8;
+    var b = tankDepth() + plant(0, P.BALL_D/2);
+    b += hook(ID/2, -1, IH);
+    // Ranh V phai MO LEN. Ban dau ve thanh mot cai nem chia XUONG — dung nguoc,
+    // va do la kieu loi chi anh nhin moi bat, code chay sach.
+    var w2 = P.TRUNK_D/2 + 9;
+    var vh = (P.TRUNK_D/2) / Math.tan(P.V_ANGLE/2 * Math.PI/180);
+    var hB = vh + 6, zB = zS - hB;
+    b += rect(-ID/2, z2y(zS), ID/2 - w2, hB, { f:"var(--part)", s:"var(--part)", w:0.7, o:0.85 });
+    b += rect(-ID/2, z2y(IH), P.ARM_T, IH - zB, { f:"var(--part)", s:"var(--part)",
+        w:0.7, o:0.85 });
+    b += el("path", { d:"M" + (-w2) + " " + z2y(zB) + " L" + w2 + " " + z2y(zB)
+        + " L" + w2 + " " + z2y(zS) + " L0 " + z2y(zS - vh)
+        + " L" + (-w2) + " " + z2y(zS) + " Z",
+      fill:"var(--part)", "fill-opacity":0.85, stroke:"var(--part)", "stroke-width":0.7 });
+    b += el("path", { d:"M" + (-w2 - 3) + " " + (z2y(zS) - 1)
+        + " q" + (w2 + 3) + " -12 " + (2*w2 + 6) + " 0",
+      fill:"none", stroke:"var(--ink)", "stroke-width":1.2, "stroke-dasharray":"2.4 1.6" });
+    b += txt(w2 + 6, z2y(zS) - 12, "dây mềm, buộc CHÙNG", { fs:6.2, a:"start", b:1 });
+    b += line(0, z2y(zS - vh) + 1, 14, z2y(zB) + 10, { s:"var(--part)", w:0.5 });
+    b += txt(15, z2y(zB) + 11, "rãnh V " + P.V_ANGLE + "°", { fs:6.2, a:"start",
+        fill:"var(--part)", b:1 });
+    b += dimV(zS, WATER, ID/2 + 8, "yên trên nước " + (zS - WATER).toFixed(0), { fs:6.4 });
+    b += txt(-80, 2, "MẶT CẮT dọc chiều sâu", { fs:8, b:1, a:"start" });
+    return svg(VB_DEPTH, b, "Yên nằm TRÊN mặt nước — chỗ duy nhất chạm cây là vỏ thân.");
+  },
+  plan:function () {
+    var b = planBase();
+    b += rect(P.TRUNK_X - 17, -ID/2 - P.GLASS_T - P.WALL, 34,
+        ID/2 + P.GLASS_T + P.WALL - P.TRUNK_D/2 - 4,
+        { f:"var(--part)", s:"var(--part)", w:0.7, o:0.85 });
+    b += rect(P.TRUNK_X - 17, -P.TRUNK_D/2 - 10, 34, 30,
+        { f:"var(--part)", s:"var(--part)", w:0.7, o:0.55 });
+    b += rect(P.TRUNK_X - 15, -P.TRUNK_D/2 - 10, P.TIE_W, 30,
+        { f:"var(--draw-bg)", s:"var(--part)", w:0.6 });
+    b += rect(P.TRUNK_X + 11, -P.TRUNK_D/2 - 10, P.TIE_W, 30,
+        { f:"var(--draw-bg)", s:"var(--part)", w:0.6 });
+    b += line(P.TRUNK_X + 13, 18, P.TRUNK_X + 22, 40, { s:"var(--part)", w:0.5 });
+    b += txt(P.TRUNK_X + 23, 41, "khe luồn dây", { fs:6.2, a:"start", fill:"var(--part)", b:1 });
+    b += txt(-92, -P.TANK_D/2 - 12, "MẶT BẰNG", { fs:8, b:1, a:"start" });
+    return svg(VB_PLAN, b, "Rãnh V mở lên, hai khe luồn dây hai bên. Không có vòng kín nào.");
+  },
+  up:["<b>Ít nhựa nhất</b>, nhìn nhẹ nhất — gần như không thấy gì trong hồ",
+      "Cao độ chỉnh <b>vô cấp</b>: buộc lại dây là xong, không phải in lại",
+      "Không phụ thuộc hình dạng bầu rễ → chạy được kể cả khi số ⑲ xấu",
+      "Yên nằm trên mặt nước → không bám tảo, không cặn vôi"],
+  dn:["<b>Chạm vào thân đang SỐNG.</b> Buộc chặt là thắt cổ chai; phải nới 6 tháng/lần và phải nhớ",
+      "Giữ bằng ma sát dây, không phải bằng hình học — buộc lỏng thì cây tụt dần",
+      "Thêm vật tư mua ngoài (dây), và chất lượng lắp phụ thuộc tay buộc"],
+  num:[["nhựa", g2(HOOK_VOL + (IH - BALL_TOP - 8)*P.ARM_T*P.ARM_H*0.8 + ARM_VOL
+         + 34*20*P.ARM_H*0.45)],
+       ["chạm vào", "VỎ THÂN — sống"],
+       ["phản lực lên kính", "2,1 N"],
+       ["tâm tải cách thành", (ID/2).toFixed(0) + " mm"],
+       ["chỉnh cao độ", "vô cấp"],
+       ["số chi tiết", "1 + dây"],
+       ["in", "úp ngược, không support"]],
+  verdict:"<b>Chọn khi</b> muốn chỉnh cao thấp thoải mái và chấp nhận một việc bảo dưỡng định kỳ."
+},
+{
+  tag:"PA-3", rec:false, pill:null,
+  name:"Cầu ngang HAI móc + vành đỡ vai",
+  slug:"twin-hook-bridge-ring",
+  sec:function () {
+    var b = tankDepth() + plant(0, P.BALL_D/2);
+    b += hook(ID/2, -1, IH) + hook(ID/2, 1, IH);
+    b += rect(-ID/2 - P.WALL, z2y(IH + P.BRIDGE_H), ID + 2*P.WALL, P.BRIDGE_H,
+        { f:"var(--part)", s:"var(--part)", w:0.8, o:0.85 });
+    var hx = [-RR - 3, 0, RR + 3];
+    for (var i = 0; i < 3; i++)
+      b += rect(hx[i] - 1.6, z2y(IH), 3.2, IH - RING_Z, { f:"var(--part)", o:0.85 });
+    b += ringSection(0, RING_Z, -1);
+    b += txt(0, z2y(IH + P.BRIDGE_H/2) + 2, "nhịp " + (ID + 2*P.WALL).toFixed(0)
+        + " — bắc qua chiều NGẮN", { fs:6.4, fill:"var(--panel)", b:1 });
+    b += dimV(IH, RING_Z, ID/2 + 9, "3 thanh treo " + (IH - RING_Z).toFixed(0), { fs:6.4 });
+    b += txt(-14, z2y(RING_Z) - 4, "bầu tựa VAI lên vành", { fs:6.2, fill:"var(--part)", b:1 });
+    b += txt(-80, 2, "MẶT CẮT dọc chiều sâu", { fs:8, b:1, a:"start" });
+    return svg(VB_DEPTH, b,
+      "Hai móc đối nhau ⇒ mô-men hẩy triệt tiêu, kính chỉ chịu NÉN thẳng xuống mép.");
+  },
+  plan:function () {
+    var b = planBase();
+    b += rect(P.TRUNK_X - P.BRIDGE_W/2, -ID/2 - P.GLASS_T - P.WALL, P.BRIDGE_W,
+        ID + 2*P.GLASS_T + 2*P.WALL, { f:"var(--part)", s:"var(--part)", w:0.8, o:0.65 });
+    b += planRing(P.TRUNK_X, 0, Math.PI/2);
+    b += line(P.TRUNK_X - 36, -P.TANK_D/2 - 9, P.TRUNK_X + 36, -P.TANK_D/2 - 9,
+        { m:1, s:"var(--accent)", w:0.7 });
+    b += txt(P.TRUNK_X, -P.TANK_D/2 - 13, "trượt dọc mép",
+        { fs:6.2, fill:"var(--accent)", b:1 });
+    b += txt(-92, -P.TANK_D/2 - 22, "MẶT BẰNG", { fs:8, b:1, a:"start" });
+    b += txt(-92, P.TANK_D/2 + 11, "che một dải rộng " + P.BRIDGE_W + "mm qua miệng hồ",
+        { fs:6, a:"start", fill:"var(--ink-soft)" });
+    return svg("-92 -80 184 168", b, "Cầu bắc qua chiều 100 (chiều NGẮN), không phải chiều 150.");
+  },
+  up:["<b>Không có mô-men hẩy</b> — hai móc đối nhau, kính chỉ chịu nén thẳng xuống mép",
+      "Cứng nhất trong bốn phương án: cầu chỉ nhịp " + (ID + 2*P.WALL).toFixed(0)
+        + "mm, hai đầu tựa",
+      "Trượt dọc mép được → đặt đúng vị trí thân mà không cần in lại",
+      "Chạm cây giống PA-1: chỉ ở vai bầu rễ"],
+  dn:["Cầu <b>vắt qua miệng hồ</b> — cành lá đang nằm trên mép sẽ vướng, phải luồn qua",
+      "Nhựa nhiều nhất trong ba phương án đầu",
+      "Vẫn cần bầu rễ có VAI — số đo ⑲",
+      "Cầu " + P.BRIDGE_W + "×" + P.BRIDGE_H + " in nằm thì phải bo góc kỹ ở mặt bám bàn"],
+  num:[["nhựa", g2(2*HOOK_VOL + (ID + 2*P.WALL)*P.BRIDGE_W*P.BRIDGE_H*0.4
+         + 3*(IH - RING_Z)*3.2*6 + RING_VOL)],
+       ["chạm vào", "vai bầu rễ"],
+       ["phản lực lên kính", "0 N ngang"],
+       ["nhịp cầu", (ID + 2*P.WALL).toFixed(0) + " mm"],
+       ["vành ngồi ở", "z " + RING_Z.toFixed(0)],
+       ["số chi tiết", "2 (cầu + vành)"],
+       ["in", "nằm, không support"]],
+  verdict:"<b>Chọn khi</b> hồ hay bị chạm vào, hoặc muốn dịch vị trí cây sau này mà không in lại."
+},
+{
+  tag:"PA-4", rec:false, pill:null,
+  name:"Móc thành NGẮN + nôi đỡ đáy bầu",
+  slug:"rim-hook-deep-cradle",
+  sec:function () {
+    var b = tankLong() + plant(P.TRUNK_X, P.BALL_W/2);
+    var xw = -IW/2;
+    b += hook(IW/2, -1, IH);
+    b += rect(xw, z2y(IH), P.ARM_T, IH - P.CRADLE_Z, { f:"var(--part)", s:"var(--part)",
+        w:0.7, o:0.85 });
+    b += rect(xw, z2y(P.CRADLE_Z), P.TRUNK_X - xw + 6, 12,
+        { f:"var(--part)", s:"var(--part)", w:0.7, o:0.85 });
+    b += el("path", { d:"M" + (P.TRUNK_X - P.CRADLE_ID/2) + " " + z2y(P.CRADLE_Z + 20)
+        + " L" + (P.TRUNK_X - P.CRADLE_ID/2 + 13) + " " + z2y(P.CRADLE_Z)
+        + " L" + (P.TRUNK_X + P.CRADLE_ID/2 - 13) + " " + z2y(P.CRADLE_Z)
+        + " L" + (P.TRUNK_X + P.CRADLE_ID/2) + " " + z2y(P.CRADLE_Z + 20),
+      fill:"none", stroke:"var(--part)", "stroke-width":2.4, "stroke-linejoin":"round" });
+    b += dimV(IH, P.CRADLE_Z, xw - 8, "càng " + (IH - P.CRADLE_Z).toFixed(0), { fs:6.4, left:1 });
+    b += dimH(xw, P.TRUNK_X, z2y(P.CRADLE_Z) + 22, "vươn ngang "
+        + (P.TRUNK_X - xw).toFixed(0), { fs:6.6, below:1 });
+    b += txt(P.TRUNK_X, z2y(P.CRADLE_Z + 20) - 3, "nôi hở đỡ ĐÁY bầu", { fs:6.2,
+        fill:"var(--part)", b:1 });
+    b += txt(-108, 2, "MẶT CẮT dọc chiều DÀI", { fs:8, b:1, a:"start" });
+    return svg(VB_LONG, b, "Đi đường thành NGẮN vì hai thành dài chỉ còn 1mm.");
+  },
+  plan:function () {
+    var b = planBase();
+    b += rect(-IW/2 - P.GLASS_T - P.WALL, -24, IW/2 + P.TRUNK_X + P.GLASS_T + P.WALL, 8,
+        { f:"var(--part)", s:"var(--part)", w:0.7, o:0.8 });
+    b += rect(-IW/2 - P.GLASS_T - P.WALL, 16, IW/2 + P.TRUNK_X + P.GLASS_T + P.WALL, 8,
+        { f:"var(--part)", s:"var(--part)", w:0.7, o:0.8 });
+    b += el("circle", { cx:P.TRUNK_X, cy:0, r:P.CRADLE_ID/2, fill:"none",
+        stroke:"var(--part)", "stroke-width":1.8, "stroke-dasharray":"3.5 2" });
+    b += dimH(-IW/2, P.TRUNK_X - P.BALL_W/2, -P.TANK_D/2 - 9,
+        "hành lang " + ROOM_L.toFixed(0) + "mm", { fs:6.4 });
+    b += txt(-92, -P.TANK_D/2 - 22, "MẶT BẰNG", { fs:8, b:1, a:"start" });
+    b += txt(-92, P.TANK_D/2 + 11, "hai càng len qua hành lang bên TRÁI bầu rễ",
+        { fs:6, a:"start", fill:"var(--ink-soft)" });
+    return svg("-92 -80 184 168", b, "Hai càng thả xuống trong hành lang "
+      + ROOM_L.toFixed(0) + "mm bên trái, rồi vươn ngang ở z38 — tức là NẰM DƯỚI bầu rễ, "
+      + "không xuyên qua nó. Hành lang này chỉ tồn tại nếu bầu vẫn lệch phải như trong ảnh.");
+  },
+  up:["<b>Không chạm cây ở đâu cả</b> — không thân, không vai. Đỡ từ dưới đáy bầu",
+      "Nhấc CẢ cụm giá lẫn cây ra một lần để thay nước / rửa rễ",
+      "Không phụ thuộc hình dạng bầu rễ (số ⑲ không chặn)",
+      "Đỡ đáy bầu ⇒ giải luôn việc rễ bị nén trên kính đáy"],
+  dn:["<b>Nhựa nhiều nhất, và toàn bộ nằm trong nước</b> — bám tảo, thành một cái khung nhìn thấy rõ",
+      "Phải len qua hành lang " + ROOM_L.toFixed(0)
+        + "mm; hành lang đó biến mất nếu đặt lại cây vào giữa hồ",
+      "Tay đòn dài nhất: vươn ngang " + (P.TRUNK_X + IW/2).toFixed(0)
+        + "mm ⇒ phản lực lên kính gấp đôi PA-1",
+      "Càng dài " + (IH - P.CRADLE_Z).toFixed(0) + "mm chạy dọc thành — vướng khi rửa kính"],
+  num:[["nhựa", g2(HOOK_VOL + 2*(IH - P.CRADLE_Z)*6*14*0.8
+         + (P.TRUNK_X + IW/2)*P.ARM_T*12*0.8 + Math.PI*P.CRADLE_ID*P.ARM_T*4)],
+       ["chạm vào", "đáy bầu rễ"],
+       ["phản lực lên kính", "4,0 N"],
+       ["vươn ngang", (P.TRUNK_X + IW/2).toFixed(0) + " mm"],
+       ["nôi ở", "z " + P.CRADLE_Z],
+       ["số chi tiết", "1–2"],
+       ["in", "đứng, không support"]],
+  verdict:"<b>Chọn khi</b> ưu tiên tuyệt đối không chạm vào cây, và chấp nhận một cái khung nhìn thấy trong hồ."
+}
+];
+
+document.getElementById("opts").innerHTML = OPTS.map(function (o) {
+  return '<div class="opt' + (o.rec ? " rec" : "") + '">'
+    + '<div class="ohead"><span class="tag">' + o.tag + '</span>'
+    + '<h3>' + o.name + '</h3>'
+    + '<span class="slug">' + o.slug + '</span>'
+    + (o.pill ? '<span class="pill">' + o.pill + '</span>' : '')
+    + '</div>'
+    + '<div class="draws"><div class="d">' + o.sec() + '</div>'
+    + '<div class="d">' + o.plan() + '</div></div>'
+    + '<div class="obody">'
+    + '<div><h4>Được</h4><ul class="up"><li>' + o.up.join('</li><li>') + '</li></ul></div>'
+    + '<div><h4>Mất</h4><ul class="dn"><li>' + o.dn.join('</li><li>') + '</li></ul></div>'
+    + '<div><h4>Số</h4><table>' + o.num.map(function (r) {
+        return '<tr><td class="k">' + r[0] + '</td><td class="n">' + r[1] + '</td></tr>';
+      }).join('') + '</table></div>'
+    + '</div>'
+    + '<p class="verdict">' + o.verdict + '</p>'
+    + '</div>';
+}).join("");
+
+/* ═══ bang so sanh. Mau to TUONG MINH tung o — suy tu gia tri thi "VO THAN song"
+   o dong "cham vao cay o dau" bi to XANH, dung nguoc y nghia. ═══ */
+var ROWS = [
+  ["Chạm vào cây ở đâu",   ["vai bầu rễ", "VỎ THÂN sống", "vai bầu rễ", "đáy bầu rễ"],
+                           ["", "n2", "", ""]],
+  ["Nguy cơ thắt cổ chai", ["không", "CÓ", "không", "không"],        ["y", "n2", "y", "y"]],
+  ["Bảo dưỡng định kỳ",    ["không", "nới dây 6 tháng", "không", "không"], ["y", "n2", "y", "y"]],
+  ["Chỉnh cao độ",         ["in lại cột", "vô cấp", "in lại", "in lại"],   ["", "y", "", ""]],
+  ["Chỉnh vị trí ngang",   ["không", "không", "trượt dọc mép", "không"],   ["", "", "y", ""]],
+  ["Phụ thuộc số đo ⑲",    ["CÓ", "không", "CÓ", "không"],          ["n2", "y", "n2", "y"]],
+  ["Mô-men hẩy lên kính",  ["2,1 N", "2,1 N", "0", "4,0 N"],         ["", "", "y", ""]],
+  ["Vắt qua miệng hồ",     ["không", "không", "CÓ, dải 14mm", "không"],    ["y", "y", "n2", "y"]],
+  ["Nhựa ngâm nước",       ["vành Ø62", "không có", "vành Ø62", "gần như cả bộ"],
+                           ["", "y", "", "n2"]],
+  ["Nhấc cả cụm ra được",  ["không", "không", "không", "CÓ"],        ["", "", "", "y"]],
+  ["Số chi tiết in",       ["1", "1 + dây", "2", "1–2"],             ["y", "", "", ""]]
+];
+document.getElementById("cmp").innerHTML =
+  "<tr><th></th>" + OPTS.map(function (o) {
+    return "<th>" + o.tag + (o.rec ? " \u2605" : "") + "</th>"; }).join("") + "</tr>"
+  + ROWS.map(function (r) {
+      return "<tr><td>" + r[0] + "</td>" + r[1].map(function (v, k) {
+        var cls = r[2][k];
+        return '<td class="c' + (cls ? " " + cls : "") + '">' + v + "</td>";
+      }).join("") + "</tr>";
+    }).join("");
+</script>

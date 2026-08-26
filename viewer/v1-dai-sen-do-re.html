@@ -1,0 +1,633 @@
+<title>Đài sen đỡ bầu rễ — viewer tham số</title>
+<style>
+  :root {
+    --paper:#ECEFF1; --panel:#FFFFFF; --panel-2:#F5F7F8;
+    --ink:#14202A; --ink-soft:#566873; --rule:#C2CCD2; --rule-soft:#DDE3E7;
+    --red:#C31F2B; --ok:#2E7D5B; --accent:#3F8478;
+    --v-bg:#E7ECEE;
+
+    --display:"Arial Narrow","Helvetica Neue Condensed","Segoe UI Semibold","Segoe UI",sans-serif;
+    /* KHÔNG dùng Georgia: thiếu glyph dấu kép tiếng Việt (ấ ắ ẫ) — CLAUDE.md mục 1. */
+    --body:Cambria,"Noto Serif","Times New Roman",serif;
+    --mono:Consolas,"SF Mono","Roboto Mono","Courier New",monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:#101619; --panel:#182126; --panel-2:#1E282E;
+      --ink:#E3EAED; --ink-soft:#93A4AE; --rule:#35454E; --rule-soft:#26333A;
+      --red:#E24450; --ok:#5FBE92; --accent:#63B3A5;
+      --v-bg:#141B1F;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:#101619; --panel:#182126; --panel-2:#1E282E;
+    --ink:#E3EAED; --ink-soft:#93A4AE; --rule:#35454E; --rule-soft:#26333A;
+    --red:#E24450; --ok:#5FBE92; --accent:#63B3A5;
+    --v-bg:#141B1F;
+  }
+
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:var(--body);
+         font-size:15px; line-height:1.5; }
+  .wrap { max-width:1220px; margin:0 auto; padding:20px 18px 60px; }
+  h1 { font-family:var(--display); font-size:27px; margin:0 0 2px; }
+  .sub { color:var(--ink-soft); margin:0 0 16px; font-size:14px; }
+  .sub b { color:var(--red); }
+
+  .grid { display:grid; grid-template-columns:minmax(0,1fr) 330px; gap:16px; align-items:start; }
+  @media (max-width:900px) { .grid { grid-template-columns:1fr; } }
+
+  .stage { background:var(--v-bg); border:1px solid var(--rule); border-radius:8px;
+           overflow:hidden; position:relative; }
+  canvas { display:block; width:100%; height:clamp(400px,66vh,700px); touch-action:none;
+           cursor:grab; }
+  canvas.drag { cursor:grabbing; }
+  .hint { position:absolute; left:10px; bottom:8px; font-size:12px; color:var(--ink-soft);
+          font-family:var(--display); pointer-events:none; }
+
+  .panel { background:var(--panel); border:1px solid var(--rule); border-radius:8px;
+           padding:12px 14px; margin-bottom:12px; }
+  .panel h3 { font-family:var(--display); font-size:15px; margin:0 0 8px;
+              text-transform:uppercase; letter-spacing:.05em; color:var(--ink-soft); }
+
+  .seg { display:flex; gap:0; margin-bottom:12px; }
+  .seg button { flex:1; font-family:var(--display); font-size:14px; padding:8px 6px;
+        border:1px solid var(--rule); background:var(--panel-2); color:var(--ink-soft);
+        cursor:pointer; }
+  .seg button:first-child { border-radius:6px 0 0 6px; }
+  .seg button:last-child { border-radius:0 6px 6px 0; border-left:none; }
+  .seg button.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+  .sl { display:grid; grid-template-columns:1fr auto; gap:2px 8px; margin:9px 0 0;
+        font-size:13.5px; }
+  .sl label { color:var(--ink); }
+  .sl .v { font-family:var(--mono); font-size:13px; color:var(--accent); text-align:right; }
+  .sl input { grid-column:1/3; width:100%; margin:1px 0 0; accent-color:var(--accent); }
+  .sl .why { grid-column:1/3; font-size:12px; color:var(--ink-soft); margin:-1px 0 2px; }
+
+  .chk { display:flex; flex-wrap:wrap; gap:4px 12px; font-size:13.5px; }
+  .chk label { display:flex; align-items:center; gap:5px; cursor:pointer; }
+
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  td { padding:2px 0; vertical-align:top; }
+  td.k { color:var(--ink-soft); }
+  td.n { font-family:var(--mono); text-align:right; white-space:nowrap; }
+  .chk2 { font-size:12.5px; margin:3px 0; display:flex; gap:6px; align-items:flex-start; }
+  .dot { flex:none; width:9px; height:9px; border-radius:50%; margin-top:4px; }
+  .dot.ok { background:var(--ok); } .dot.no { background:var(--red); }
+  .chk2.no { color:var(--red); }
+  .note { font-size:12.5px; color:var(--ink-soft); margin-top:9px;
+          border-top:1px solid var(--rule-soft); padding-top:8px; }
+  .mono { font-family:var(--mono); font-size:.93em; }
+</style>
+
+<div class="wrap">
+<h1>Đài sen đỡ bầu rễ — viewer tham số</h1>
+<p class="sub"><span class="mono">hydroponic-bonsai-root-cradle</span> ·
+<b>Mọi số ở đây là số ĐỌC TỪ ẢNH, chưa đo.</b> Viewer này là nguồn số liệu sống —
+khi dựng CAD thì lấy số từ đây, đừng gõ lại. Số phải khớp
+<span class="mono">design/params.py</span>.</p>
+
+<div class="grid">
+  <div>
+    <div class="stage">
+      <canvas id="cv"></canvas>
+      <div class="hint">kéo để xoay · lăn chuột để phóng</div>
+    </div>
+  </div>
+
+  <div>
+    <div class="seg">
+      <button id="bBefore">Hiện trạng</button>
+      <button id="bAfter" class="on">Sau khi lắp</button>
+    </div>
+
+    <div class="panel">
+      <h3>Số đo</h3>
+      <table id="tOut"></table>
+    </div>
+
+    <div class="panel">
+      <h3>Ràng buộc</h3>
+      <div id="tChk"></div>
+      <div class="note">Đây chính là các <span class="mono">assert</span> trong
+        <span class="mono">params.py</span>. Kéo thanh trượt cho đỏ lên để thấy vì sao
+        thiết kế dừng ở chỗ nó đang dừng.</div>
+    </div>
+
+    <div class="panel">
+      <h3>Chỉnh</h3>
+      <div id="sliders"></div>
+    </div>
+
+    <div class="panel">
+      <h3>Hiện</h3>
+      <div class="chk" id="toggles"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+"use strict";
+var PI = Math.PI, rad = function (d) { return d * PI / 180; }, deg = function (r) { return r * 180 / PI; };
+
+/* ═══ [DO] — doc tu anh 18/08/2026, CHUA DO. Khop design/params.py ═══ */
+var D = {
+  TANK_W: 150, TANK_D: 100, TANK_H: 180, GLASS_T: 5, FILLET_R: 5,
+  WATER_Z: 145, BALL_W: 98, BALL_D: 88, BALL_H: 102, BALL_BOTTOM_Z: 27, TAIL_LEN: 27,
+  TRUNK_D: 14, TRUNK_LEAN: 8, TRUNK_X: 18, TRUNK_Y: 0,
+  PLANT_G: 350, CROWN_G: 120, CROWN_OFF: 40
+};
+/* ═══ [CHOT] — quyet dinh thiet ke ═══ */
+var C = {
+  COLLAR_ABOVE: 10, WATER_DROP: 15, BALL_FLOOR_GAP: 12,
+  SOLE_CLEAR: 3, SOLE_T: 3.2, SOLE_STRETCH: 1.33, SOLE_LOBE_N: 6,
+  LEG_N: 6, LEG_W: 7, WAIST_D: 45,
+  PETAL_N: 8, PETAL_SLOPE: 43, PETAL_GAP: 4, PETAL_LIP: 6, WALL: 2.4,
+  SADDLE_LEN: 34, SADDLE_T: 5, SADDLE_LIP_H: 7
+};
+var RHO_PETG = 1.27, RHO_ROOT = 1.05;
+
+/* ═══ [SUY] — cong thuc nay phai giong params.py tung dong ═══ */
+var G = {};
+function derive() {
+  var g = G;
+  g.INNER_W = D.TANK_W - 2 * D.GLASS_T;
+  g.INNER_D = D.TANK_D - 2 * D.GLASS_T;
+  g.INNER_H = D.TANK_H - D.GLASS_T;
+
+  g.WATER_NEW = D.WATER_Z - C.WATER_DROP;
+  g.COLLAR_Z = D.BALL_BOTTOM_Z + D.BALL_H;
+  g.RAISE = (g.WATER_NEW + C.COLLAR_ABOVE) - g.COLLAR_Z;
+  g.SEAT_Z = D.BALL_BOTTOM_Z + g.RAISE;
+
+  g.BALL_R = (D.BALL_W + D.BALL_D) / 4;
+
+  var S = rad(C.PETAL_SLOPE);
+  g.S = S;
+  g.Z_APEX = g.SEAT_Z - (g.BALL_R / Math.sin(S) - g.BALL_R);
+  g.CONTACT_R = g.BALL_R * Math.cos(S);
+  g.CONTACT_Z = g.Z_APEX + g.CONTACT_R / Math.tan(S);
+  g.WAIST_R = C.WAIST_D / 2;
+  g.WAIST_Z = g.Z_APEX + g.WAIST_R / Math.tan(S);
+
+  g.SOLE_HALF_D = g.INNER_D / 2 - C.SOLE_CLEAR;
+  g.SOLE_HALF_W = Math.min(g.INNER_W / 2 - C.SOLE_CLEAR, g.SOLE_HALF_D * C.SOLE_STRETCH);
+  g.PETAL_TOP_R = Math.min(g.CONTACT_R + C.PETAL_LIP, g.SOLE_HALF_D - C.WALL);
+  g.PETAL_TOP_Z = g.Z_APEX + g.PETAL_TOP_R / Math.tan(S);
+  g.CRADLE_H = g.PETAL_TOP_Z;
+
+  g.LEG_FOOT_R = g.SOLE_HALF_D - C.WALL;
+  g.LEG_RUN = g.LEG_FOOT_R - g.WAIST_R;
+  g.LEG_RISE = g.WAIST_Z - C.SOLE_T;
+  g.LEG_SLOPE = deg(Math.atan2(g.LEG_RUN, g.LEG_RISE));
+
+  // vat ly duoi nuoc — xem README muc 3.2
+  g.BALL_G_WET = D.PLANT_G - D.CROWN_G;
+  g.BALL_APP = g.BALL_G_WET * (1 - 1 / RHO_ROOT);
+  g.HOLD = D.CROWN_G + g.BALL_APP;
+
+  var aSole = PI * g.SOLE_HALF_W * g.SOLE_HALF_D * 0.62;
+  var aLegs = C.LEG_N * C.LEG_W * Math.hypot(g.LEG_RISE, g.LEG_RUN);
+  var aPet = C.PETAL_N * ((g.PETAL_TOP_R - g.WAIST_R) / Math.sin(S))
+           * (2 * PI * (g.PETAL_TOP_R + g.WAIST_R) / 2 / C.PETAL_N - C.PETAL_GAP);
+  g.VOL = (aSole * C.SOLE_T + (aLegs + Math.max(aPet, 0)) * C.WALL) / 1000;
+  g.MASS = g.VOL * RHO_PETG;
+  g.APP = g.VOL * (RHO_PETG - 1);
+  g.WATER_RISE = g.VOL * 1000 / (g.INNER_W * g.INNER_D);
+  g.TIP = (g.HOLD + g.APP) * g.SOLE_HALF_D / (D.CROWN_G * D.CROWN_OFF);
+}
+
+/* Cac assert cua params.py, viet lai de hien mau */
+function checks() {
+  var g = G, r = [];
+  function k(ok, t) { r.push({ ok: ok, t: t }); }
+  k(D.BALL_D <= g.INNER_D - 2,
+    "bầu rễ Ø" + D.BALL_D.toFixed(0) + " lọt lòng hồ " + g.INNER_D.toFixed(0) + " − 2");
+  k(g.CONTACT_R + C.WALL <= g.SOLE_HALF_D,
+    "vòng tiếp xúc R" + g.CONTACT_R.toFixed(1) + " + thành ≤ nửa bề sâu "
+    + g.SOLE_HALF_D.toFixed(1) + " (không đâm kính)");
+  k(g.PETAL_TOP_R > g.CONTACT_R + 1.5,
+    "vành cánh R" + g.PETAL_TOP_R.toFixed(1) + " vượt vòng tiếp xúc (còn gờ chặn)");
+  k(C.PETAL_SLOPE <= 43, "cánh sen dốc " + C.PETAL_SLOPE.toFixed(0) + "° ≤ 43 (chừa 2° dưới 45)");
+  k(g.LEG_SLOPE <= 43, "chân nghiêng " + g.LEG_SLOPE.toFixed(1) + "° ≤ 43");
+  k(C.WAIST_D >= 36, "cổ Ø" + C.WAIST_D.toFixed(0) + " ≥ 36 — rễ thòng chui qua được");
+  k(C.SOLE_CLEAR >= D.FILLET_R * 0.6,
+    "đế cách kính " + C.SOLE_CLEAR.toFixed(1) + " ≥ 0,6 × gối silicon " + D.FILLET_R);
+  k(g.SEAT_Z >= C.BALL_FLOOR_GAP,
+    "đáy bầu ở " + g.SEAT_Z.toFixed(1) + " ≥ " + C.BALL_FLOOR_GAP + " (nước đi vòng dưới)");
+  k(g.SEAT_Z - D.TAIL_LEN >= -2,
+    "chùm rễ thòng không đâm đáy kính (đầu rễ ở " + (g.SEAT_Z - D.TAIL_LEN).toFixed(1) + ")");
+  k(g.SEAT_Z + D.BALL_H <= g.INNER_H - 5,
+    "cổ rễ ở " + (g.SEAT_Z + D.BALL_H).toFixed(0) + " ≤ miệng hồ " + g.INNER_H + " − 5");
+  k(g.PETAL_TOP_Z + g.WATER_RISE < g.WATER_NEW,
+    "vành đài " + g.PETAL_TOP_Z.toFixed(1) + " chìm dưới mặt nước " + g.WATER_NEW.toFixed(0));
+  k(g.HOLD > 40, "lực ép cây vào đài " + g.HOLD.toFixed(0) + "g > 40");
+  return r;
+}
+
+/* ═══════════ hinh hoc: gom quad, painter's algorithm tren canvas 2D ═══════════ */
+var Q = [];
+var NOEDGE = false;   // bat len khi ve mat chia nho: 72 quad deu vien thi thanh mot bui gach
+function quad(kind, a, b, c, d) { Q.push({ k: kind, p: [a, b, c, d], ne: NOEDGE }); }
+function box(kind, a, b) {
+  var c = [[a[0],a[1],a[2]],[b[0],a[1],a[2]],[b[0],b[1],a[2]],[a[0],b[1],a[2]],
+           [a[0],a[1],b[2]],[b[0],a[1],b[2]],[b[0],b[1],b[2]],[a[0],b[1],b[2]]];
+  var F = [[0,1,2,3],[7,6,5,4],[0,4,5,1],[2,6,7,3],[1,5,6,2],[3,7,4,0]];
+  for (var i = 0; i < 6; i++) quad(kind, c[F[i][0]], c[F[i][1]], c[F[i][2]], c[F[i][3]]);
+}
+// lang tru theo mot doan thang, tiet dien chu nhat w x t, huong ngang tuy y
+function strut(kind, p0, p1, w, t) {
+  var d = [p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2]];
+  var L = Math.hypot(d[0], d[1], d[2]) || 1;
+  var u = [d[0]/L, d[1]/L, d[2]/L];
+  var s = Math.abs(u[2]) > 0.9 ? [1,0,0] : [0,0,1];
+  var a = [u[1]*s[2]-u[2]*s[1], u[2]*s[0]-u[0]*s[2], u[0]*s[1]-u[1]*s[0]];
+  var al = Math.hypot(a[0],a[1],a[2]) || 1; a = [a[0]/al*w/2, a[1]/al*w/2, a[2]/al*w/2];
+  var b = [u[1]*a[2]-u[2]*a[1], u[2]*a[0]-u[0]*a[2], u[0]*a[1]-u[1]*a[0]];
+  var bl = Math.hypot(b[0],b[1],b[2]) || 1; b = [b[0]/bl*t/2, b[1]/bl*t/2, b[2]/bl*t/2];
+  function P(p, sa, sb) { return [p[0]+sa*a[0]+sb*b[0], p[1]+sa*a[1]+sb*b[1], p[2]+sa*a[2]+sb*b[2]]; }
+  var c = [P(p0,-1,-1),P(p0,1,-1),P(p0,1,1),P(p0,-1,1),P(p1,-1,-1),P(p1,1,-1),P(p1,1,1),P(p1,-1,1)];
+  var F = [[0,1,2,3],[7,6,5,4],[0,4,5,1],[2,6,7,3],[1,5,6,2],[3,7,4,0]];
+  for (var i = 0; i < 6; i++) quad(kind, c[F[i][0]], c[F[i][1]], c[F[i][2]], c[F[i][3]]);
+}
+// dai non: r0@z0 -> r1@z1, tu goc a0 toi a1, ellipse he so ex/ey
+function band(kind, r0, z0, r1, z1, a0, a1, n, cx, cy, ex, ey) {
+  ex = ex || 1; ey = ey || 1; cx = cx || 0; cy = cy || 0;
+  for (var i = 0; i < n; i++) {
+    var t0 = a0 + (a1 - a0) * i / n, t1 = a0 + (a1 - a0) * (i + 1) / n;
+    quad(kind,
+      [cx + r0*ex*Math.cos(t0), cy + r0*ey*Math.sin(t0), z0],
+      [cx + r0*ex*Math.cos(t1), cy + r0*ey*Math.sin(t1), z0],
+      [cx + r1*ex*Math.cos(t1), cy + r1*ey*Math.sin(t1), z1],
+      [cx + r1*ex*Math.cos(t0), cy + r1*ey*Math.sin(t0), z1]);
+  }
+}
+function ellipsoid(kind, cx, cy, cz, rx, ry, rz, nu, nv) {
+  for (var i = 0; i < nu; i++) for (var j = 0; j < nv; j++) {
+    var u0 = i/nu*2*PI, u1 = (i+1)/nu*2*PI, v0 = -PI/2 + j/nv*PI, v1 = -PI/2 + (j+1)/nv*PI;
+    function p(u, v) {
+      return [cx + rx*Math.cos(v)*Math.cos(u), cy + ry*Math.cos(v)*Math.sin(u), cz + rz*Math.sin(v)];
+    }
+    quad(kind, p(u0,v0), p(u1,v0), p(u1,v1), p(u0,v1));
+  }
+}
+
+var LABELS = [];
+function build(mode) {
+  Q = []; LABELS = [];
+  var g = G, iw = g.INNER_W/2, id = g.INNER_D/2, ow = D.TANK_W/2, od = D.TANK_D/2;
+  var after = (mode === "after");
+  var water = after ? g.WATER_NEW : D.WATER_Z;
+  var seat  = after ? g.SEAT_Z    : D.BALL_BOTTOM_Z;
+
+  // ── ho kinh: 4 vach + day
+  box("glass", [-ow,-od,-D.GLASS_T], [ow,od,0]);
+  box("glass", [-ow,-od,0], [-iw,od,g.INNER_H]);
+  box("glass", [ iw,-od,0], [ ow,od,g.INNER_H]);
+  box("glass", [-iw,-od,0], [ iw,-id,g.INNER_H]);
+  box("glass", [-iw, id,0], [ iw, od,g.INNER_H]);
+  // ── nuoc
+  box("water", [-iw,-id,0], [iw,id,water]);
+
+  // ── dai sen (chi o che do "sau")
+  if (after && SHOW.cradle) {
+    var ex = g.SOLE_HALF_W / g.SOLE_HALF_D;
+    // tam de: vien mui sen, ve bang cac dai tu tam ra
+    var NL = C.SOLE_LOBE_N, seg = 72;
+    NOEDGE = true;
+    for (var i = 0; i < seg; i++) {
+      var t0 = i/seg*2*PI, t1 = (i+1)/seg*2*PI;
+      var r0 = g.SOLE_HALF_D * (1 + 0.11 * Math.cos(NL*t0));
+      var r1 = g.SOLE_HALF_D * (1 + 0.11 * Math.cos(NL*t1));
+      // mat tren
+      quad("cradle", [0,0,C.SOLE_T], [r0*ex*Math.cos(t0), r0*Math.sin(t0), C.SOLE_T],
+                     [r1*ex*Math.cos(t1), r1*Math.sin(t1), C.SOLE_T], [0,0,C.SOLE_T]);
+      // canh vien
+      quad("cradle", [r0*ex*Math.cos(t0), r0*Math.sin(t0), 0],
+                     [r1*ex*Math.cos(t1), r1*Math.sin(t1), 0],
+                     [r1*ex*Math.cos(t1), r1*Math.sin(t1), C.SOLE_T],
+                     [r0*ex*Math.cos(t0), r0*Math.sin(t0), C.SOLE_T]);
+    }
+    NOEDGE = false;
+    // 6 chan
+    for (var L = 0; L < C.LEG_N; L++) {
+      var a = L / C.LEG_N * 2*PI + PI/C.LEG_N;
+      strut("cradle",
+        [g.LEG_FOOT_R*Math.cos(a), g.LEG_FOOT_R*Math.sin(a), C.SOLE_T],
+        [g.WAIST_R*Math.cos(a),    g.WAIST_R*Math.sin(a),    g.WAIST_Z],
+        C.LEG_W, C.WALL * 1.6);
+    }
+    // vanh co
+    band("cradle", g.WAIST_R, g.WAIST_Z - 4, g.WAIST_R, g.WAIST_Z, 0, 2*PI, 40);
+    // canh sen — be ngang GOC do PETAL_GAP quyet dinh, thu dan ve dau canh
+    var dA = 2*PI / C.PETAL_N;
+    var gapA = C.PETAL_GAP / Math.max(g.PETAL_TOP_R, 1);
+    var hRoot = Math.max((dA - gapA) / 2, 0.02), hTip = hRoot * 0.62;
+    NOEDGE = true;
+    for (var k = 0; k < C.PETAL_N; k++) {
+      var aMid = (k + 0.5) * dA;
+      var NR = 5, NA = 5;
+      for (var s = 0; s < NR; s++) for (var j = 0; j < NA; j++) {
+        var f0 = s/NR, f1 = (s+1)/NR;
+        function pt(f, u) {   // f doc theo canh, u = -1..1 ngang canh
+          var r = g.WAIST_R + (g.PETAL_TOP_R - g.WAIST_R) * f;
+          var z = g.WAIST_Z + (g.PETAL_TOP_Z - g.WAIST_Z) * f;
+          var h = hRoot + (hTip - hRoot) * f;
+          var t = aMid + u * h;
+          return [r*Math.cos(t), r*Math.sin(t), z];
+        }
+        var u0 = -1 + 2*j/NA, u1 = -1 + 2*(j+1)/NA;
+        quad("cradle", pt(f0,u0), pt(f0,u1), pt(f1,u1), pt(f1,u0));
+      }
+    }
+    NOEDGE = false;
+    LABELS.push({ t: "đài sen", p: [g.PETAL_TOP_R*0.8, 0, g.PETAL_TOP_Z + 4] });
+  }
+
+  // ── cay: bau re + chum re + than + tan
+  if (SHOW.plant) {
+    var bz = seat + D.BALL_H/2;
+    ellipsoid("root", D.TRUNK_X, D.TRUNK_Y, bz, D.BALL_W/2, D.BALL_D/2, D.BALL_H/2, 18, 10);
+    // chum re thong xoa
+    for (var t = 0; t < 9; t++) {
+      var aa = t/9*2*PI, rr = 12 + 14*((t*7)%5)/5;
+      strut("root",
+        [D.TRUNK_X + rr*Math.cos(aa)*0.7, D.TRUNK_Y + rr*Math.sin(aa)*0.6, seat + 6],
+        [D.TRUNK_X + rr*Math.cos(aa)*1.1, D.TRUNK_Y + rr*Math.sin(aa)*0.9, seat - D.TAIL_LEN],
+        2.2, 2.2);
+    }
+    // than nghieng
+    var collar = seat + D.BALL_H, topZ = g.INNER_H + 46;
+    var lean = rad(D.TRUNK_LEAN), dx = -(topZ - collar) * Math.tan(lean);
+    strut("root", [D.TRUNK_X, D.TRUNK_Y, collar - 6],
+                  [D.TRUNK_X + dx, D.TRUNK_Y, topZ], D.TRUNK_D, D.TRUNK_D);
+    // tan la: vai cum, lech ve mot phia dung bang CROWN_OFF
+    var cx0 = D.TRUNK_X + dx;
+    var cl = [[-D.CROWN_OFF*1.5, 6, 8], [-D.CROWN_OFF*0.4, -14, 20], [D.CROWN_OFF*1.1, 10, 14],
+              [D.CROWN_OFF*0.3, -4, 30], [-D.CROWN_OFF*2.1, -8, -4]];
+    for (var q = 0; q < cl.length; q++)
+      ellipsoid("leaf", cx0 + cl[q][0], D.TRUNK_Y + cl[q][1], topZ + cl[q][2], 30, 22, 11, 10, 6);
+    LABELS.push({ t: "cổ rễ", p: [D.TRUNK_X + 26, D.TRUNK_Y, collar] });
+  }
+
+  // ── yen do than
+  if (after && SHOW.saddle) {
+    var sx = D.TRUNK_X, z0 = g.INNER_H, z1 = g.INNER_H + C.SADDLE_T;
+    var halfSlot = D.TRUNK_D/2 + 3;
+    box("saddle", [sx - C.SADDLE_LEN/2, -od - 2, z0], [sx + C.SADDLE_LEN/2, D.TRUNK_Y - halfSlot, z1]);
+    box("saddle", [sx - C.SADDLE_LEN/2, D.TRUNK_Y + halfSlot, z0], [sx + C.SADDLE_LEN/2, od + 2, z1]);
+    box("saddle", [sx - C.SADDLE_LEN/2, -od - 2, z0 - C.SADDLE_LIP_H], [sx + C.SADDLE_LEN/2, -od, z0]);
+    box("saddle", [sx - C.SADDLE_LEN/2, od, z0 - C.SADDLE_LIP_H], [sx + C.SADDLE_LEN/2, od + 2, z0]);
+    LABELS.push({ t: "yên đỡ thân", p: [sx, od + 26, z1 + 6] });
+  }
+
+  LABELS.push({ t: "mặt nước " + water.toFixed(0), p: [-iw - 26, 0, water] });
+}
+
+/* ═══════════ ve ═══════════ */
+var PAL = {
+  light: { bg:"#E7ECEE", ink:"#14202A",
+    glass:[96,148,140,0.16], water:[70,140,180,0.20], root:[150,118,58,0.62],
+    leaf:[78,138,72,0.80], cradle:[198,86,56,0.95], saddle:[58,104,150,0.90] },
+  dark:  { bg:"#141B1F", ink:"#E3EAED",
+    glass:[100,175,163,0.14], water:[95,175,210,0.18], root:[199,164,104,0.55],
+    leaf:[124,187,114,0.72], cradle:[235,120,85,0.95], saddle:[120,165,210,0.88] }
+};
+function pal() {
+  var t = document.documentElement.getAttribute("data-theme");
+  var dark = t === "dark" || (t !== "light" &&
+    window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+  return dark ? PAL.dark : PAL.light;
+}
+
+var cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+var SHOW = { tank:true, plant:true, cradle:true, saddle:true, label:true };
+var MODE = "after", explode = 0, dpr = 1;
+// CAMERA DAT NGAY LUC KHOI TAO — khong doi fit() dat ho (CLAUDE.md muc 1)
+var cam = { az: -0.70, el: 0.19, dist: 430 };
+var center = [0, 0, 98];
+
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  var r = cv.getBoundingClientRect();
+  cv.width = Math.max(1, Math.round(r.width * dpr));
+  cv.height = Math.max(1, Math.round(r.height * dpr));
+  draw();
+}
+function basis() {
+  var ce = Math.cos(cam.el), se = Math.sin(cam.el);
+  var ca = Math.cos(cam.az), sa = Math.sin(cam.az);
+  var eye = [center[0] + cam.dist*ce*sa, center[1] - cam.dist*ce*ca, center[2] + cam.dist*se];
+  var f = [center[0]-eye[0], center[1]-eye[1], center[2]-eye[2]];
+  var fl = Math.hypot(f[0],f[1],f[2]) || 1; f = [f[0]/fl,f[1]/fl,f[2]/fl];
+  var r = [f[1], -f[0], 0];
+  var rl = Math.hypot(r[0],r[1],r[2]) || 1; r = [r[0]/rl,r[1]/rl,r[2]/rl];
+  var u = [r[1]*f[2]-r[2]*f[1], r[2]*f[0]-r[0]*f[2], r[0]*f[1]-r[1]*f[0]];
+  return { eye:eye, f:f, r:r, u:u };
+}
+var LIGHT = (function () { var v = [0.42, -0.66, 0.62], l = Math.hypot(v[0],v[1],v[2]);
+  return [v[0]/l, v[1]/l, v[2]/l]; })();
+
+function draw() {
+  var T = pal(), B = basis(), W = cv.width, H = cv.height;
+  var focal = H / (2 * Math.tan(0.40));
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle = T.bg; ctx.fillRect(0,0,W,H);
+
+  function project(p) {
+    var d = [p[0]-B.eye[0], p[1]-B.eye[1], p[2]-B.eye[2]];
+    var z = d[0]*B.f[0] + d[1]*B.f[1] + d[2]*B.f[2];
+    if (z < 30) return null;
+    var x = d[0]*B.r[0] + d[1]*B.r[1] + d[2]*B.r[2];
+    var y = d[0]*B.u[0] + d[1]*B.u[1] + d[2]*B.u[2];
+    return [W/2 + x*focal/z, H/2 - y*focal/z, z];
+  }
+
+  var list = [];
+  for (var i = 0; i < Q.length; i++) {
+    var q = Q[i];
+    if (q.k === "glass" || q.k === "water") { if (!SHOW.tank) continue; }
+    var off = 0;
+    if (q.k === "cradle") off = -explode * 26;
+    if (q.k === "saddle") off =  explode * 34;
+    if (q.k === "root" || q.k === "leaf") off = explode * 10;
+
+    var p3 = [], ok = true, cx = 0, cy = 0, cz = 0;
+    for (var j = 0; j < 4; j++) {
+      var v = [q.p[j][0], q.p[j][1], q.p[j][2] + off];
+      cx += v[0]/4; cy += v[1]/4; cz += v[2]/4;
+      var pp = project(v);
+      if (!pp) { ok = false; break; }
+      p3.push(pp);
+    }
+    if (!ok) continue;
+    // phap tuyen 3D de do bong
+    var a = q.p[0], b = q.p[1], c = q.p[2];
+    var u1 = [b[0]-a[0], b[1]-a[1], b[2]-a[2]], u2 = [c[0]-a[0], c[1]-a[1], c[2]-a[2]];
+    var n = [u1[1]*u2[2]-u1[2]*u2[1], u1[2]*u2[0]-u1[0]*u2[2], u1[0]*u2[1]-u1[1]*u2[0]];
+    var nl = Math.hypot(n[0],n[1],n[2]) || 1;
+    var lam = Math.abs((n[0]*LIGHT[0] + n[1]*LIGHT[1] + n[2]*LIGHT[2]) / nl);
+    var dist = Math.hypot(cx-B.eye[0], cy-B.eye[1], cz-B.eye[2]);
+    list.push({ d: dist, p: p3, k: q.k, s: 0.58 + 0.42*lam, ne: q.ne });
+  }
+  list.sort(function (m, n2) { return n2.d - m.d; });
+
+  for (var t = 0; t < list.length; t++) {
+    var e = list[t], col = T[e.k];
+    if (!col) continue;
+    var r = Math.round(col[0]*e.s), gg = Math.round(col[1]*e.s), bb = Math.round(col[2]*e.s);
+    ctx.beginPath();
+    ctx.moveTo(e.p[0][0], e.p[0][1]);
+    for (var j2 = 1; j2 < 4; j2++) ctx.lineTo(e.p[j2][0], e.p[j2][1]);
+    ctx.closePath();
+    ctx.fillStyle = "rgba(" + r + "," + gg + "," + bb + "," + col[3] + ")";
+    ctx.fill();
+    if (!e.ne && (e.k === "glass" || e.k === "cradle" || e.k === "saddle")) {
+      ctx.strokeStyle = "rgba(" + Math.round(r*0.55) + "," + Math.round(gg*0.55) + ","
+        + Math.round(bb*0.55) + "," + Math.min(1, col[3] + 0.35) + ")";
+      ctx.lineWidth = 0.8 * dpr;
+      ctx.stroke();
+    }
+  }
+
+  if (SHOW.label) {
+    ctx.font = (12 * dpr) + "px Consolas, monospace";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    var placed = [];
+    for (var L = 0; L < LABELS.length; L++) {
+      var pp2 = project(LABELS[L].p);
+      if (!pp2) continue;
+      var w = ctx.measureText(LABELS[L].t).width + 10*dpr, h = 17*dpr;
+      var clash = false;
+      for (var m = 0; m < placed.length; m++)
+        if (Math.abs(placed[m][0]-pp2[0]) < (placed[m][2]+w)/2 &&
+            Math.abs(placed[m][1]-pp2[1]) < h) { clash = true; break; }
+      if (clash) continue;
+      placed.push([pp2[0], pp2[1], w]);
+      ctx.fillStyle = pal() === PAL.dark ? "rgba(16,22,25,0.82)" : "rgba(255,255,255,0.86)";
+      ctx.fillRect(pp2[0]-w/2, pp2[1]-h/2, w, h);
+      ctx.fillStyle = T.ink;
+      ctx.fillText(LABELS[L].t, pp2[0], pp2[1]);
+    }
+  }
+}
+
+/* ═══════════ giao dien ═══════════ */
+var SL = [
+  ["WATER_DROP", C, "Hạ mực nước", 0, 30, 1, "mm", "mm rẻ nhất — không tốn nhựa nào"],
+  ["COLLAR_ABOVE", C, "Cổ rễ trên mặt nước", 0, 25, 1, "mm", "chống thối gốc"],
+  ["BALL_D", D, "Bầu rễ, bề ngang cạnh NGẮN", 60, 96, 1, "mm", "số đo ⑧ — số tệ nhất, kéo thử xem hỏng ở đâu"],
+  ["PETAL_SLOPE", C, "Độ dốc cánh sen", 28, 48, 1, "°", "trên 43 là xé sợi; tù hơn thì vòng tiếp xúc nhỏ lại"],
+  ["PETAL_N", C, "Số cánh sen", 5, 14, 1, "", ""],
+  ["WAIST_D", C, "Ø cổ đài (lỗ cho rễ thòng)", 28, 70, 1, "mm", ""],
+  ["SOLE_CLEAR", C, "Đế cách kính mỗi bên", 1, 9, 0.5, "mm", "gối silicon góc đáy ăn mất chỗ này"],
+  ["CROWN_OFF", D, "Trọng tâm tán lệch", 0, 90, 2, "mm", "tử số của hệ số chống lật"]
+];
+var slBox = document.getElementById("sliders");
+SL.forEach(function (s) {
+  var d = document.createElement("div"); d.className = "sl";
+  d.innerHTML = '<label>' + s[2] + '</label><span class="v" data-v="' + s[0] + '"></span>'
+    + '<input type="range" min="' + s[3] + '" max="' + s[4] + '" step="' + s[5] + '">'
+    + (s[7] ? '<div class="why">' + s[7] + '</div>' : '');
+  slBox.appendChild(d);
+  var inp = d.querySelector("input");
+  inp.value = s[1][s[0]];
+  inp.addEventListener("input", function () { s[1][s[0]] = parseFloat(inp.value); refresh(); });
+});
+
+var TG = [["tank","hồ + nước"],["plant","cây"],["cradle","đài sen"],["saddle","yên đỡ thân"],["label","nhãn"]];
+var tgBox = document.getElementById("toggles");
+TG.forEach(function (t) {
+  var l = document.createElement("label");
+  l.innerHTML = '<input type="checkbox"' + (SHOW[t[0]] ? " checked" : "") + '> ' + t[1];
+  l.querySelector("input").addEventListener("change", function (e) {
+    SHOW[t[0]] = e.target.checked; refresh();
+  });
+  tgBox.appendChild(l);
+});
+var exp = document.createElement("div"); exp.className = "sl";
+exp.innerHTML = '<label>Nổ chi tiết</label><span class="v" id="vExp">0</span>'
+  + '<input type="range" min="0" max="1" step="0.02" value="0">';
+tgBox.parentNode.appendChild(exp);
+exp.querySelector("input").addEventListener("input", function (e) {
+  explode = parseFloat(e.target.value);
+  document.getElementById("vExp").textContent = explode.toFixed(2);
+  refresh();
+});
+
+document.getElementById("bBefore").onclick = function () { setMode("before"); };
+document.getElementById("bAfter").onclick  = function () { setMode("after"); };
+function setMode(m) {
+  MODE = m;
+  document.getElementById("bBefore").className = m === "before" ? "on" : "";
+  document.getElementById("bAfter").className  = m === "after"  ? "on" : "";
+  refresh();
+}
+
+function refresh() {
+  derive();
+  build(MODE);
+
+  SL.forEach(function (s) {
+    var el = document.querySelector('[data-v="' + s[0] + '"]');
+    if (el) el.textContent = s[1][s[0]] + (s[6] ? " " + s[6] : "");
+  });
+
+  var g = G, sub = MODE === "after" ? g.WATER_NEW : D.WATER_Z;
+  var collar = (MODE === "after" ? g.SEAT_Z : D.BALL_BOTTOM_Z) + D.BALL_H;
+  var rows = [
+    ["mặt nước", sub.toFixed(0) + " mm"],
+    ["cổ rễ", collar.toFixed(0) + " mm  (" + (collar - sub >= 0 ? "+" : "") + (collar - sub).toFixed(0) + " so với nước)"],
+    ["đáy bầu rễ", (MODE === "after" ? g.SEAT_Z : D.BALL_BOTTOM_Z).toFixed(0) + " mm"],
+    ["—", ""],
+    ["đài: đế", (2*g.SOLE_HALF_W).toFixed(0) + " × " + (2*g.SOLE_HALF_D).toFixed(0) + " mm"],
+    ["đài: cao", g.CRADLE_H.toFixed(1) + " mm"],
+    ["vòng tiếp xúc", "R" + g.CONTACT_R.toFixed(1) + " @ z" + g.CONTACT_Z.toFixed(0)],
+    ["chân nghiêng", g.LEG_SLOPE.toFixed(1) + "°"],
+    ["nhựa", g.MASS.toFixed(0) + " g PETG"],
+    ["nước dâng khi thả", g.WATER_RISE.toFixed(1) + " mm"],
+    ["—", ""],
+    ["bầu rễ trong nước", g.BALL_APP.toFixed(0) + " g  (cân được " + g.BALL_G_WET.toFixed(0) + " g)"],
+    ["lực ép vào đài", g.HOLD.toFixed(0) + " g"],
+    ["hệ số chống lật", g.TIP.toFixed(2)]
+  ];
+  document.getElementById("tOut").innerHTML = rows.map(function (r) {
+    return r[0] === "—" ? '<tr><td colspan="2" style="height:7px"></td></tr>'
+      : '<tr><td class="k">' + r[0] + '</td><td class="n">' + r[1] + '</td></tr>';
+  }).join("");
+
+  document.getElementById("tChk").innerHTML = checks().map(function (c) {
+    return '<div class="chk2' + (c.ok ? "" : " no") + '"><span class="dot '
+      + (c.ok ? "ok" : "no") + '"></span><span>' + c.t + '</span></div>';
+  }).join("");
+
+  draw();
+}
+
+/* xoay / phong */
+var drag = null;
+cv.addEventListener("pointerdown", function (e) {
+  drag = { x: e.clientX, y: e.clientY }; cv.classList.add("drag");
+  cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener("pointermove", function (e) {
+  if (!drag) return;
+  cam.az -= (e.clientX - drag.x) * 0.008;
+  cam.el = Math.max(-1.35, Math.min(1.35, cam.el + (e.clientY - drag.y) * 0.006));
+  drag = { x: e.clientX, y: e.clientY };
+  draw();
+});
+cv.addEventListener("pointerup", function () { drag = null; cv.classList.remove("drag"); });
+cv.addEventListener("wheel", function (e) {
+  e.preventDefault();
+  cam.dist = Math.max(160, Math.min(1600, cam.dist * (1 + Math.sign(e.deltaY) * 0.10)));
+  draw();
+}, { passive: false });
+
+window.addEventListener("resize", resize);
+if (window.matchMedia)
+  window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", draw);
+
+derive(); build(MODE); resize(); refresh();
+</script>
